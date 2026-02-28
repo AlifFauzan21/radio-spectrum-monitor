@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafik Occupancy & PSD</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .main-layout { display: flex; gap: 20px; width: 95%; max-width: 1400px; margin: 20px auto; align-items: flex-start; }
+        .sidebar { flex: 1; background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); min-width: 300px; }
+        .content-area { flex: 3; display: flex; flex-direction: column; gap: 20px; width: 100%; }
+        .chart-card { background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .waterfall-box { height: 250px; background: linear-gradient(to bottom, #001f3f, #0074D9); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-family: monospace; }
+        .btn-action { width: 100%; padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; margin-top: 5px; text-transform: uppercase; font-size: 13px; transition: 0.2s; }
+        .btn-blue { background: linear-gradient(to right, #007bff, #0056b3); }
+        .btn-orange { background: linear-gradient(to right, #ff9f43, #ff6b6b); margin-top: 10px; }
+        .btn-grey { background: #555; margin-top: 20px; }
+        .btn-action:hover { transform: scale(1.02); opacity: 0.9; }
+        label { font-size: 14px; font-weight: 600; color: #444; margin-bottom: 5px; display: block; margin-top: 15px;}
+        select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        h2 { font-size: 18px; color: #004aad; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        @media (max-width: 900px) { .main-layout { flex-direction: column; } .sidebar { width: 100%; } }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <div class="header">
+        <img src="{{ url_for('static', filename='img/logo1_polsri.png') }}" class="logo">
+        <img src="{{ url_for('static', filename='img/logo2_elektro.png') }}" class="logo">
+    </div>
+
+    <div class="main-layout">
+        <div class="sidebar">
+            <h2>Parameter Occupancy</h2>
+            <label>Rentang Frekuensi (MHz):</label>
+            <select><option>1. Radio FM (87-108 MHz)</option><option>2. Airband (118-137 MHz)</option></select>
+            <label>Bandwidth (Hz):</label>
+            <select><option>50 kHz</option><option>100 kHz</option></select>
+
+            <button class="btn-action btn-blue" onclick="startMonitoring()">Mulai Monitoring</button>
+            <button class="btn-action btn-orange" onclick="stopMonitoring()">Stop Monitoring</button>
+
+            <label>Status:</label>
+            <input type="text" id="statusBox" value="Standby" readonly style="font-weight: bold; color: red;">
+
+            <a href="{{ url_for('start_gnuradio') }}">
+                <button class="btn-action btn-grey">Kembali</button>
+            </a>
+        </div>
+
+        <div class="content-area">
+            <div class="chart-card">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 20px; font-weight: bold;">Grafik PSD Real-Time</span>
+                    <span id="liveValue" style="color: blue; font-weight: bold;">- dB</span>
+                </div>
+                <canvas id="psdChart" height="100"></canvas>
+            </div>
+            <div class="chart-card">
+                <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">Waterfall</div>
+                <div class="waterfall-box">[ Visualisasi Waterfall ]</div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">TEB 2023 - Monitoring System</div>
+</div>
+
+<script>
+    // 1. Setup Grafik Awal
+    const ctx = document.getElementById('psdChart').getContext('2d');
+    const psdChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [], // Label waktu (kosong dulu)
+            datasets: [{
+                label: 'Signal Strength (dB)',
+                data: [], // Data (kosong dulu)
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                borderWidth: 2,
+                tension: 0.4, // Membuat garis melengkung halus
+                fill: true,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: { duration: 0 }, // Matikan animasi agar realtime lancar
+            scales: {
+                y: { beginAtZero: false, min: -100, max: -30 },
+                x: { display: false } // Sembunyikan label X agar tidak penuh
+            }
+        }
+    });
+
+    let intervalId = null;
+
+    // 2. Fungsi Mulai Monitoring
+    function startMonitoring() {
+        if (intervalId) return; // Jangan jalankan kalau sudah jalan
+        
+        document.getElementById('statusBox').value = "RUNNING (Real-Time)";
+        document.getElementById('statusBox').style.color = "green";
+
+        // Minta data setiap 500ms (0.5 detik)
+        intervalId = setInterval(fetchData, 500);
+    }
+
+    // 3. Fungsi Stop
+    function stopMonitoring() {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+        document.getElementById('statusBox').value = "STOPPED";
+        document.getElementById('statusBox').style.color = "red";
+    }
+
+    // 4. Fungsi Mengambil Data dari Python (Backend)
+    function fetchData() {
+        fetch('/get_live_data')
+            .then(response => response.json())
+            .then(data => {
+                // Update text
+                document.getElementById('liveValue').innerText = data.power.toFixed(2) + " dB";
+
+                // Tambahkan data baru ke grafik
+                const timeLabel = data.timestamp;
+                const powerValue = data.power;
+
+                // Masukkan data ke array grafik
+                if (psdChart.data.labels.length > 20) {
+                    psdChart.data.labels.shift(); // Hapus data lama jika sudah penuh
+                    psdChart.data.datasets[0].data.shift();
+                }
+
+                psdChart.data.labels.push(timeLabel);
+                psdChart.data.datasets[0].data.push(powerValue);
+
+                psdChart.update(); // Update tampilan grafik
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    }
+</script>
+
+</body>
+</html>

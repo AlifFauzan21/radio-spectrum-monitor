@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Airband</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #004aad;
+            color: white;
+            text-align: center;
+            padding: 50px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .screen-box {
+            background-color: black;
+            border: 2px solid white;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-family: monospace;
+            color: #00ff00;
+            font-size: 16px;
+        }
+        .btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+            transition: 0.3s;
+        }
+        .btn-start { background-color: #2ecc71; color: white; }
+        .btn-stop { background-color: #e74c3c; color: white; }
+        .btn-back { background-color: white; color: #004aad; }
+        
+        .btn:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Monitoring Airband (AM)</h1>
+        <p>Pilot & ATC Communication (118 - 137 MHz)</p>
+
+        <div class="screen-box" id="statusScreen">
+            [ STATUS: STANDBY ]<br>
+            Klik Tombol 'Mulai' untuk membuka Radio.
+        </div>
+
+        <div>
+            <button class="btn btn-start" onclick="startAirband()">MULAI MONITORING</button>
+            <button class="btn btn-stop" onclick="stopRadio()">STOP</button>
+        </div>
+        
+        <br>
+        <a href="{{ url_for('index') }}">
+            <button class="btn btn-back">Kembali ke Dashboard</button>
+        </a>
+    </div>
+
+    <script>
+        function startAirband() {
+            document.getElementById('statusScreen').innerHTML = "[ STATUS: MENJALANKAN SCRIPT... ]<br>Lihat Jendela Pop-up di Server!";
+            
+            // Panggil backend app2.py (/run-airband-script -> default.py)
+            fetch('/run-airband-script')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('statusScreen').innerHTML = "[ STATUS: RUNNING ]<br>" + data;
+                })
+                .catch(error => {
+                    document.getElementById('statusScreen').innerHTML = "[ ERROR ]<br>Gagal menjalankan script.";
+                });
+        }
+
+        function stopRadio() {
+            fetch('/stop-radio')
+                .then(() => {
+                    document.getElementById('statusScreen').innerHTML = "[ STATUS: STOPPED ]<br>Radio dimatikan.";
+                });
+        }
+    </script>
+
+</body>
+</html>

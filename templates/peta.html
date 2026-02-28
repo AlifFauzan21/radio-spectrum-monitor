@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Peta Lokasi GPS</title>
+    <meta http-equiv="refresh" content="10">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; }
+
+        #map { height: 80%; }
+
+        #homeButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 12px 14px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 9999;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            text-decoration: none;
+        }
+
+        #homeButton:hover {
+            background-color: #0056b3;
+        }
+
+        #homeButton i {
+            pointer-events: none;
+        }
+
+        #info {
+            padding: 15px;
+            background-color: #f9f9f9;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+            border-top: 1px solid #ddd;
+            position: fixed;
+            top:0;
+            left:0;
+            z-index:99;
+        }
+
+        #info p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <a id="homeButton" href="#" onclick="closeTab()" title="Tutup Tab">
+        <i class="fas fa-home"></i>
+    </a>
+    
+    <div id="info">
+        <p><strong>Latitude:</strong> {{ lat }}</p>
+        <p><strong>Longitude:</strong> {{ lon }}</p>
+        <p><strong>Time to Fix:</strong> {{ time_fix }}</p>
+        <p><strong>Fix Mode:</strong> {{ fix }}</p>
+        <p><strong>Jumlah Satelit:</strong> {{ sat }}</p>
+    </div>
+
+    <div id="map">
+        {{ map_html|safe }}
+    </div>
+
+    <script>
+    function closeTab() {
+        window.open('', '_self');
+        window.close();
+    }
+    </script>
+</body>
+</html>
+

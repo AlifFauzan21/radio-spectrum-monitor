@@ -1,0 +1,41 @@
+<!DOCTYPE html> 
+<html lang="id"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Sistem Monitoring Spektrum Radio</title> 
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"> 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> 
+</head> 
+
+<body> 
+
+<div class="container"> 
+    <div class="header"> 
+        <img src="{{ url_for('static', filename='img/logo1_polsri.png') }}" class="logo"> 
+        <img src="{{ url_for('static', filename='img/logo2_elektro.png') }}" class="logo"> 
+    </div> 
+
+    <h1>SISTEM MONITORING SPEKTRUM FREKUENSI RADIO</h1> 
+
+    <div class="menu"> 
+        <a href="{{ url_for('start_gnuradio') }}">
+            <button type="button">Monitoring GNU Radio</button> 
+        </a>
+
+        <a href="{{ url_for('start_airband') }}">
+            <button type="button">Monitoring Airband</button> 
+        </a>
+
+        <a href="{{ url_for('gps_page') }}">
+            <button type="button">GPS</button> 
+        </a>
+         
+    </div> 
+
+    <div class="footer">TEB 2023</div> 
+
+</div> 
+
+</body> 
+</html>

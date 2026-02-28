@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Monitoring Spektrum</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+      background: url("{{ url_for('static', filename='img/finalbg.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+      color: #000;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      padding: 40px 20px;
+    }
+
+    .logo-container {
+      margin-bottom: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 50px;
+    }
+
+    .logo-container img {
+      max-height: 90px;
+      vertical-align: middle;
+    }
+
+    h1 {
+      font-size: 3.2em;
+      font-weight: 900;
+      color: #000000;
+      margin-top: 0;
+      margin-bottom: 50px;
+      letter-spacing: 1px;
+    }
+
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 25px;
+    }
+
+    button {
+      background: linear-gradient(to right, #34c1f7, #2abdf6);
+      color: white;
+      border: none;
+      padding: 20px 40px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      min-width: 450px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-align: center;
+    }
+
+    button:hover {
+      transform: scale(1.03);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .status-indicator-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 15px;
+      border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.6);
+      border: 1px solid #dee2e6;
+      margin-top: 30px;
+      max-width: 450px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    .status-light {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      margin-right: 12px;
+      flex-shrink: 0;
+      transition: background-color 0.5s ease, box-shadow 0.5s ease;
+    }
+
+    .status-light.green {
+      background-color: #28a745;
+      box-shadow: 0 0 10px #28a745;
+    }
+
+    .status-light.red {
+      background-color: #dc3545;
+      box-shadow: 0 0 10px #dc3545;
+    }
+
+    .status-light.yellow {
+      background-color: #ffc107;
+      box-shadow: 0 0 10px #ffc107;
+    }
+
+    #status-text {
+      font-size: 1.1em;
+      font-weight: 500;
+      color: #333;
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 2em; }
+      .logo-container img { max-height: 70px; }
+      button { min-width: 90%; }
+      .status-indicator-container { max-width: 90%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="logo-container">
+      <img src="{{ url_for('static', filename='img/polsri.png') }}" alt="Logo Polsri" />
+      <img src="{{ url_for('static', filename='img/komdigi.png') }}" alt="Logo Kominfo" />
+    </div>
+
+    <h1>SISTEM MONITORING SPEKTRUM FREKUENSI RADIO</h1>
+
+    <div class="button-container">
+      <!-- Placeholder aman untuk integrasi GNU Radio -->
+      <button type="button" onclick="alert('Fitur ini belum terhubung dengan GNU Radio.');">
+        MONITORING GNURADIO
+      </button>
+
+      <!-- KOREKSI UTAMA: routing sesuai backend (/) -->
+      <button type="button" onclick="window.location.href='/'">
+        SCANNING PITA FREKUENSI
+      </button>
+    </div>
+
+    <div class="status-indicator-container">
+      <div id="status-light" class="status-light yellow"></div>
+      <span id="status-text">Mengecek status alat...</span>
+    </div>
+
+  </div>
+
+  <script>
+    const statusLight = document.getElementById('status-light');
+    const statusText  = document.getElementById('status-text');
+
+    async function updateStatusIndicator() {
+      try {
+        const response = await fetch('/status');
+        if (!response.ok) throw new Error('Server tidak merespon');
+
+        const data = await response.json();
+        statusLight.className = 'status-light';
+
+        switch (data.status) {
+          case 'ok':
+            statusLight.classList.add('green');
+            break;
+          case 'error':
+            statusLight.classList.add('red');
+            break;
+          default:
+            statusLight.classList.add('yellow');
+            break;
+        }
+
+        statusText.textContent = data.message;
+
+      } catch (error) {
+        statusLight.className = 'status-light red';
+        statusText.textContent = 'Tidak dapat terhubung ke sistem monitoring.';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', updateStatusIndicator);
+    setInterval(updateStatusIndicator, 5000);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+app.log
+gps_flask/gps_log_REAL.txt
+monitorgnu/sdr_log.csv
+monitorgnu/rekaman_airband.wav
+monitorgnu/gr-adsb-maint-3.10.zip
+*.wav
+.env

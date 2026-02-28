@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Menunggu GPS Fix</title>
+    <meta http-equiv="refresh" content="10">  <!-- Auto-refresh tiap 10 detik -->
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding-top: 100px;
+            background-color: #f8f8f8;
+        }
+    </style>
+</head>
+<body>
+    <h2>📡 GPS Belum Fix</h2>
+    <p>Waktu: {{ time_fix }}</p>
+    <p>Status Fix: {{ fix }}</p>
+    <p>Jumlah Satelit Terkunci: {{ sat }}</p>
+    <p style="color:gray;">Halaman akan memuat ulang otomatis setiap 10 detik...</p>
+</body>
+</html>
+

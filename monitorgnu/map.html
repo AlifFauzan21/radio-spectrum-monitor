@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lokasi HackRF</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="timestamp" style="font-family: monospace; margin-top: 10px;">
+  Waktu GPS: -
+</div>
+  <button id="centerButton" style="
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+">Center to GPS</button>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  ></script>
+  <script>
+    let map = L.map('map').setView([0, 0], 2);
+    let marker = L.marker([0, 0]).addTo(map);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    
+    let firstUpdate = true;
+
+
+    async function updateMarker() {
+  try {
+    const res = await fetch('/gps_data');
+    const data = await res.json();
+
+    const lat = parseFloat(data.lat);
+    const lon = parseFloat(data.lon);
+    const time = data.time;
+
+    if (!isNaN(lat) && !isNaN(lon)) {
+      marker.setLatLng([lat, lon]);
+      document.getElementById('timestamp').innerText = "Waktu GPS: " + time;
+
+      if (firstUpdate) {
+        map.setView([lat, lon], 18);
+        firstUpdate = false;
+      }
+    }
+  } catch (e) {
+    console.error("Error fetching GPS:", e);
+  }
+}
+
+
+    setInterval(updateMarker, 2000);
+    
+    document.getElementById('centerButton').addEventListener('click', () => {
+  if (marker) {
+    map.setView(marker.getLatLng(), 20);
+  }
+});
+
+  </script>
+</body>
+</html>
+

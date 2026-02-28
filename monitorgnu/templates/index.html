@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Monitoring Frekuensi Radio</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+  background: url('static/finalbg.jpg') no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;  /* ✅ Izinkan scroll/zoom */
+}
+
+
+    .container {
+      width: 90%;
+      max-width: 1200px; /* Lebar container disesuaikan */
+      height: 85vh; /* Tinggi container disesuaikan */
+      background-color: rgba(255, 255, 255, 0.9); /* Warna lebih transparan */
+      border-radius: 40px;
+      border: 5px solid #2980b9;
+      padding: 30px 50px; /* Padding disesuaikan */
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px; /* Menambah jarak bawah header */
+    }
+
+    .logo {
+      height: 70px;
+      margin: 0 15px;
+    }
+
+    h1 {
+      /* Mengubah judul menjadi 2 baris */
+      font-size: 2em;
+      font-weight: 900;
+      color: #2c3e50;
+      margin-top: 20px;
+      margin-bottom: 5px;
+      line-height: 1.2;
+    }
+
+    h3 {
+      /* Mengubah sub-judul */
+      font-size: 1.2em;
+      font-weight: 700;
+      color: #34495e;
+      margin: 0;
+    }
+
+    .content-section {
+      display: flex;
+      flex-grow: 1;
+      gap: 100px; /* Menambah jarak antara tombol dan peta */
+      justify-content: center;
+      align-items: center;
+    }
+
+    .controls-panel {
+      display: flex;
+      flex-direction: column; /* Mengubah arah menjadi kolom */
+      align-items: center;
+      gap: 30px; /* Menambah jarak antar tombol */
+    }
+
+    .btn {
+      border: none;
+      color: white;
+      padding: 20px 0; /* Menambah padding vertikal */
+      width: 100%;
+      min-width: 350px; /* Menentukan lebar minimum */
+      border-radius: 30px; /* Sudut lebih bulat */
+      font-size: 1.4em; /* Font lebih besar */
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    }
+
+    .btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    }
+
+    /* Warna Tombol Disesuaikan */
+    .btn.orange { background-color: #f39c12; }
+    .btn.yellow-green { background-color: #a5c03c; }
+
+
+    .map-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    #map {
+      width: 500px; /* Lebar peta disesuaikan */
+      height: 350px; /* Tinggi peta disesuaikan */
+      border-radius: 20px;
+      border: 3px solid #3498db;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+
+    #timestamp {
+      font-family: monospace;
+      font-weight: bold;
+      font-size: 1.1em;
+      color: #2c3e50;
+    }
+
+    /* --- IKON HOME BARU --- */
+    #homeButton {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: white;
+      border: 2px solid #ccc;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    #homeButton:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    }
+
+    #homeButton img {
+      width: 35px; /* Ukuran ikon di dalam tombol */
+    }
+    /* ---------------------- */
+    
+    #centerButton {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      padding: 10px 15px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+    <a id="homeButton" href="#" onclick="closeTab()">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Home_free_icon.svg/1200px-Home_free_icon.svg.png" alt="Home">
+  </a>
+  <button id="centerButton">Center to GPS</button>
+  
+  <div class="container">
+    <div class="header">
+      <img src="static/logo_poltek.png" class="logo">
+      <img src="static/komdigi.png" class="logo">
+      <h1>SISTEM MONITORING FREKUENSI RADIO MENGGUNAKAN<br>HACKRF ONE SDR, ANTENA OMNIDIRECTIONAL SERTA GPS</h1>
+      <h3>BALAI MONITOR SPEKTRUM FREKUENSI RADIO KELAS I PALEMBANG</h3>
+    </div>
+
+    <div class="content-section">
+      <div class="controls-panel">
+        <button class="btn orange" onclick="scriptmultifrequency()">Scaning Pita Frekuensi</button>
+        <button class="btn yellow-green" onclick="scriptsinglefrequency()">Monitoring Single Frekuensi</button>
+      </div>
+
+      <div class="map-panel">
+        <div id="map"></div>
+        <div id="timestamp">Waktu GPS: -</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Kode JavaScript tidak diubah karena fungsionalitasnya tetap sama
+    let map = L.map('map', {
+  scrollWheelZoom: true,
+  doubleClickZoom: true,
+  touchZoom: true,
+}).setView([0, 0], 2);
+
+    let marker = L.marker([0, 0]).addTo(map);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let firstUpdate = true;
+
+    async function updateMarker() {
+      try {
+        const res = await fetch('/gps_data');
+        const data = await res.json();
+        const lat = parseFloat(data.lat);
+        const lon = parseFloat(data.lon);
+
+        if (data.time) {
+          const utcDate = new Date(data.time);
+          const options = {
+            timeZone: 'Asia/Jakarta',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          };
+          const wibTimeString = new Intl.DateTimeFormat('id-ID', options).format(utcDate);
+          document.getElementById('timestamp').innerText = "Waktu GPS (WIB): " + wibTimeString;
+        }
+
+        if (!isNaN(lat) && !isNaN(lon)) {
+          marker.setLatLng([lat, lon]);
+          if (firstUpdate) {
+            map.setView([lat, lon], 18);
+            firstUpdate = false;
+          }
+        } else {
+          document.getElementById('timestamp').innerText = "Gagal mengambil data GPS";
+        }
+      } catch (e) {
+        document.getElementById('timestamp').innerText = "Gagal mengambil data GPS";
+      }
+    }
+
+    setInterval(updateMarker, 2000);
+
+    document.getElementById('centerButton').addEventListener('click', () => {
+      if (marker) {
+        map.setView(marker.getLatLng(), 20);
+      }
+    });
+
+    function scriptsinglefrequency() {
+      fetch('/hackrftest', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => alert(data.message))
+        .catch(() => alert("Gagal menjalankan script."));
+    }
+
+    function scriptmultifrequency() {
+      fetch('/gnumulti', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => alert(data.message))
+        .catch(() => alert("Gagal menjalankan script."));
+    }
+  </script>
+  <script>
+function closeTab() {
+    window.open('', '_self'); // untuk beberapa browser agar bisa close
+    window.close();
+}
+</script>
+</body>
+</html>

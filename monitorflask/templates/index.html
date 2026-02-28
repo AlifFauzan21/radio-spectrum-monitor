@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Monitoring Spektrum Frekuensi</title>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f4f6f9;
+        }
+
+        header {
+            background: linear-gradient(to right, #34c1f7, #2abdf6);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h2 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        #homeButton {
+            color: white;
+            font-size: 22px;
+            text-decoration: none;
+        }
+
+        .container {
+            padding: 25px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .controls button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            background-color: #2abdf6;
+            color: white;
+        }
+
+        .controls button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-left: auto;
+            font-weight: 600;
+        }
+
+        .recording {
+            color: #dc3545;
+            font-weight: bold;
+            display: none;
+        }
+
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        canvas {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        #waterfall {
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .logs {
+            margin-top: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        select {
+            padding: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h2>Sistem Monitoring Spektrum Frekuensi</h2>
+    <!-- HOME button corrected -->
+    <a id="homeButton" href="/" title="Kembali ke Home">
+        <i class="fas fa-home"></i>
+    </a>
+</header>
+
+<div class="container">
+
+    <div class="controls">
+        <button onclick="startTimedMonitoring()">Rekam 60 Detik</button>
+        <button onclick="stopLiveMonitoring()">Stop Live</button>
+
+        <span id="timedStatus"></span>
+        <span class="recording" id="recordingIndicator">● RECORDING</span>
+
+        <div class="status" id="systemStatus">Status: Mengecek...</div>
+    </div>
+
+    <div class="charts">
+        <canvas id="spectrumChart"></canvas>
+        <div id="waterfall"></div>
+    </div>
+
+    <div class="logs">
+        <h3>Log Rekaman</h3>
+        <select id="logSelector" onchange="loadLogData()">
+            <option value="">-- Pilih File Log --</option>
+        </select>
+    </div>
+
+</div>
+
+<script>
+    let spectrumChart;
+    let waterfallData = [];
+    let isLiveMonitoring = false;
+    let liveInterval = null;
+    let statusCheckInterval = null;
+    let wasRecording = false;
+
+    const recordingIndicator = document.getElementById("recordingIndicator");
+    const timedStatus = document.getElementById("timedStatus");
+    const systemStatus = document.getElementById("systemStatus");
+
+    // =========================
+    // INIT CHART
+    // =========================
+    function initSpectrumChart() {
+        const ctx = document.getElementById('spectrumChart').getContext('2d');
+        spectrumChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Power Spectral Density (dB)',
+                    data: [],
+                    borderColor: '#2abdf6',
+                    borderWidth: 1,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: false,
+                scales: {
+                    x: { title: { display: true, text: 'Frekuensi (Hz)' }},
+                    y: { title: { display: true, text: 'Power (dB)' }}
+                }
+            }
+        });
+    }
+
+    // =========================
+    // LIVE UPDATE
+    // =========================
+    async function updateLiveCharts() {
+        try {
+            const response = await fetch('/data?cache=' + Date.now());
+            const json = await response.json();
+
+            // === GUARD: PSD kosong ===
+            if (!json.psd || json.psd.length === 0) {
+                console.warn("PSD kosong — alat belum aktif.");
+                return;
+            }
+
+            const freqs = json.freqs;
+            const psd = json.psd;
+
+            spectrumChart.data.labels = freqs;
+            spectrumChart.data.datasets[0].data = psd;
+            spectrumChart.update();
+
+            waterfallData.push(psd);
+            if (waterfallData.length > 100) waterfallData.shift();
+
+            Plotly.react('waterfall', [{
+                z: waterfallData,
+                type: 'heatmap',
+                colorscale: 'Jet'
+            }], {
+                margin: { t: 20 },
+                yaxis: { title: 'Waktu' },
+                xaxis: { title: 'Frekuensi Bin' }
+            });
+
+        } catch (error) {
+            console.error("Live update gagal:", error);
+        }
+    }
+
+    function startLiveMonitoring() {
+        if (isLiveMonitoring) return;
+        isLiveMonitoring = true;
+        liveInterval = setInterval(updateLiveCharts, 1000);
+    }
+
+    function stopLiveMonitoring() {
+        isLiveMonitoring = false;
+        clearInterval(liveInterval);
+    }
+
+    // =========================
+    // STATUS CHECK
+    // =========================
+    async function checkSystemStatus() {
+        try {
+            const response = await fetch('/status?cache=' + Date.now());
+            const data = await response.json();
+
+            systemStatus.textContent = "Status: " + data.message;
+
+            const isRecording = data.status === "recording";
+            const isReady = data.status === "ok";
+
+            recordingIndicator.style.display = isRecording ? "inline" : "none";
+
+            if (isReady && !isLiveMonitoring) startLiveMonitoring();
+            if (!isReady && isLiveMonitoring) stopLiveMonitoring();
+
+            if (isRecording) {
+                timedStatus.textContent = "Sedang merekam...";
+                timedStatus.style.color = "#dc3545";
+                wasRecording = true;
+            } else if (wasRecording) {
+                timedStatus.textContent = "Perekaman selesai.";
+                timedStatus.style.color = "#28a745";
+                loadLogFiles();
+                wasRecording = false;
+                setTimeout(() => timedStatus.textContent = "", 4000);
+            }
+
+        } catch (error) {
+            systemStatus.textContent = "Status: ERROR";
+            stopLiveMonitoring();
+        }
+    }
+
+    // =========================
+    // TIMED RECORDING
+    // =========================
+    async function startTimedMonitoring() {
+        await fetch('/start-timed');
+    }
+
+    // =========================
+    // LOG FILES
+    // =========================
+    async function loadLogFiles() {
+        const response = await fetch('/list-logs');
+        const logs = await response.json();
+
+        const selector = document.getElementById("logSelector");
+        selector.innerHTML = '<option value="">-- Pilih File Log --</option>';
+
+        logs.forEach(log => {
+            const option = document.createElement("option");
+            option.value = log;
+            option.textContent = log;
+            selector.appendChild(option);
+        });
+    }
+
+    async function loadLogData() {
+        const file = document.getElementById("logSelector").value;
+        if (!file) return;
+
+        const response = await fetch('/get-log-data?file=' + file);
+        const json = await response.json();
+
+        spectrumChart.data.labels = json.freqs;
+        spectrumChart.data.datasets[0].data = json.psd;
+        spectrumChart.update();
+    }
+
+    // =========================
+    // INIT
+    // =========================
+    document.addEventListener('DOMContentLoaded', () => {
+        initSpectrumChart();
+        loadLogFiles();
+        statusCheckInterval = setInterval(checkSystemStatus, 2000);
+    });
+</script>
+
+</body>
+</html>

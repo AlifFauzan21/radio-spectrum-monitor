@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring GPS</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        .gps-container {
+            background: rgba(255, 255, 255, 0.1); /* Kotak transparan */
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            margin: 0 auto;
+            text-align: center;
+            color: white;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #map-placeholder {
+            width: 100%;
+            height: 400px;
+            background-color: #eee;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .btn-back {
+            background-color: #dc3545; /* Warna Merah */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            text-decoration: none; /* Hilangkan garis bawah link */
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .btn-back:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="header">
+        <img src="{{ url_for('static', filename='img/logo1_polsri.png') }}" class="logo">
+        <img src="{{ url_for('static', filename='img/logo2_elektro.png') }}" class="logo">
+    </div>
+
+    <h1>MONITORING LOKASI GPS</h1>
+
+    <div class="gps-container">
+        <p>Status: <span style="color: #00ff00; font-weight: bold;">Mencari Satelit...</span></p>
+
+        <div id="map-placeholder">
+            [ Area Peta GPS akan muncul di sini ]<br>
+            (Silakan integrasikan script Leaflet/Google Maps dari file peta.html lama)
+        </div>
+
+        <p>Koordinat Terkini: <span id="koordinat">-</span></p>
+
+        <a href="{{ url_for('index') }}" class="btn-back">Kembali ke Menu</a>
+    </div>
+
+    <div class="footer">TEB 2023</div>
+
+</div>
+
+</body>
+</html>
