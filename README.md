@@ -5,7 +5,7 @@
 ![GnuRadio](https://img.shields.io/badge/GnuRadio-SDR-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-Aplikasi web berbasis **Flask** untuk monitoring spektrum frekuensi radio secara real-time menggunakan perangkat **Software Defined Radio (SDR)**. Sistem ini dikembangkan sebagai proyek akhir oleh **Kelompok 3 - TEB 2023**, Politeknik Negeri Sriwijaya (Polsri), dalam kerja sama dengan **Balai Monitor Spektrum Frekuensi Radio Kelas I Palembang**.
+Aplikasi web berbasis **Flask** untuk monitoring spektrum frekuensi radio secara real-time menggunakan perangkat **Software Defined Radio (SDR)**. Sistem ini dikembangkan sebagai proyek akhir oleh **Kelas 5 - TEB 2023**, Politeknik Negeri Sriwijaya (Polsri), dalam kerja sama dengan **Balai Monitor Spektrum Frekuensi Radio Kelas I Palembang**.
 
 ---
 
@@ -175,8 +175,8 @@ GPS_FOLDER  = os.path.join(BASE_DIR, 'gps_flask')
 
 ## 👥 Tim Pengembang
 
-**Kelompok 3 - TEB 2023**  
-Program Studi Teknik Elektronika  
+**Kelas 5 - TEB 2023**  
+Program Studi D4 Teknik Telekomunikasi  
 **Politeknik Negeri Sriwijaya (Polsri)**  
 
 Proyek ini dikembangkan dalam rangka kerja sama dengan:  
